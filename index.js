@@ -1,4 +1,3 @@
-// index.js
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -14,18 +13,15 @@ import EnrollmentRoutes from './Kambaz/Enrollments/routes.js';
 
 const app = express();
 
-// ——————————————
-// 1) CORS
-// ——————————————
 const allowedOrigins = [
   'http://localhost:5173',
-  process.env.NETLIFY_URL, // e.g. https://phenomenal-kitten-2fb0cd.netlify.app
+  process.env.NETLIFY_URL, 
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);                // allow non-browser clients
+      if (!origin) return callback(null, true);               
       if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error(`CORS policy: origin ${origin} not allowed`));
     },
@@ -41,19 +37,16 @@ const sessionOptions = {
     sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
     secure: process.env.NODE_ENV === 'development' ? false : true,
      maxAge:   Number(process.env.SESSION_MAX_AGE) || 1000 * 60 * 60 * 24,
-    // no `domain` here — defaults to your API’s host
+    
   },
 };
 
 if (process.env.NODE_ENV !== 'development') {
-  app.set('trust proxy', 1);   // enable secure cookies behind a proxy/load-balancer
+  app.set('trust proxy', 1);   
 }
 
 app.use(session(sessionOptions));
 
-// ——————————————
-// 3) ROUTES & STARTUP
-// ——————————————
 app.use(express.json());
 
 UserRoutes(app);
