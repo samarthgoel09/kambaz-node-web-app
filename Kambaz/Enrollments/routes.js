@@ -1,7 +1,7 @@
-// Kambaz/Enrollments/routes.js
+
 
 import * as dao from "./dao.js";
-import * as courseDao from "../Courses/dao.js";   // ← import to lookup course details
+import * as courseDao from "../Courses/dao.js";  
 
 export default function EnrollmentRoutes(app) {
   function resolveUserId(paramUserId, session) {
@@ -13,12 +13,10 @@ export default function EnrollmentRoutes(app) {
     return paramUserId;
   }
 
-  // NEW: return the list of Course objects this user is enrolled in
   app.get("/api/users/:userId/courses", (req, res) => {
     const uid = resolveUserId(req.params.userId, req.session);
     if (!uid) return res.sendStatus(401);
 
-    // get the enrollments, then map to full course data
     const enrollments = dao.findEnrollmentsForUser(uid);
     const courses = enrollments
       .map(e => courseDao.findCourseById(e.course))
@@ -27,7 +25,6 @@ export default function EnrollmentRoutes(app) {
     res.json(courses);
   });
 
-  // existing: list raw enrollment records
   app.get("/api/users/:userId/enrollments", (req, res) => {
     const uid = resolveUserId(req.params.userId, req.session);
     if (!uid) return res.sendStatus(401);
@@ -35,22 +32,19 @@ export default function EnrollmentRoutes(app) {
     res.json(list);
   });
 
-  // enroll in a single course
   app.post("/api/users/:userId/courses/:courseId", (req, res) => {
     const uid = resolveUserId(req.params.userId, req.session);
     if (!uid) return res.sendStatus(401);
     const cid = req.params.courseId;
 
-    // optional: check if already enrolled
     if (dao.findEnrollmentByUserCourse(uid, cid)) {
-      return res.sendStatus(409); // conflict
+      return res.sendStatus(409); 
     }
 
     const created = dao.createEnrollment(uid, cid);
     res.status(201).json(created);
   });
 
-  // unenroll from a course
   app.delete("/api/users/:userId/courses/:courseId", (req, res) => {
     const uid = resolveUserId(req.params.userId, req.session);
     if (!uid) return res.sendStatus(401);
