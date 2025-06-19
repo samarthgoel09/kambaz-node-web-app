@@ -1,24 +1,23 @@
-import Database from "../Database/index.js";
+import ModuleModel from "./model.js";
 import { v4 as uuidv4 } from "uuid";
+
+export async function createModule(module) {
+  const newMod = { _id: uuidv4(), ...module };
+  return ModuleModel.create(newMod);
+}
+
 export function findModulesForCourse(courseId) {
-  const { modules } = Database;
-  return modules.filter((module) => module.course === courseId);
+  return ModuleModel.find({ course: courseId }).exec();
 }
-export function createModule(module) {
-  const newModule = { ...module, _id: uuidv4() };
-  Database.modules = [...Database.modules, newModule];
-  return newModule;
+
+export function updateModule(moduleId, updates) {
+  return ModuleModel.findByIdAndUpdate(
+    moduleId,
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).exec();
 }
+
 export function deleteModule(moduleId) {
- const { modules } = Database;
- Database.modules = modules.filter((module) => module._id !== moduleId);
-}
-export function updateModule(moduleId, moduleUpdates) {
-  const mod = Database.modules.find((m) => m._id === moduleId);
-if (!mod) {
-    console.log("DAO.updateModule: module not found", moduleId);
-    return null;
-  }
-    Object.assign(mod, moduleUpdates);
-  return mod;
+  return ModuleModel.deleteOne({ _id: moduleId }).exec();
 }
