@@ -1,29 +1,37 @@
-import Database from "../Database/index.js";
-import { v4 as uuidv4 } from "uuid";
+// Kambaz/Courses/dao.js
 
-export function findAllCourses() {
-  return Database.courses;
-}
-export function findCoursesForEnrolledUser(userId) {
-  const { courses, enrollments } = Database;
-  const enrolledCourses = courses.filter((course) =>
-    enrollments.some((enrollment) => enrollment.user === userId && enrollment.course === course._id));
-  return enrolledCourses;
-}
-export function createCourse(course) {
+import model from "./model.js";
+import { v4 as uuidv4 } from "uuid";
+import * as enrollmentDao from "../Enrollments/dao.js";
+
+
+export const createCourse = (course) => {
   const newCourse = { ...course, _id: uuidv4() };
-  Database.courses = [...Database.courses, newCourse];
-  return newCourse;
-}
-export function deleteCourse(courseId) {
-  const { courses, enrollments } = Database;
-  Database.courses = courses.filter((course) => course._id !== courseId);
-  Database.enrollments = enrollments.filter(
-    (enrollment) => enrollment.course !== courseId
-);}
+  return model.create(newCourse);
+};
+
+export const findAllCourses = () =>
+  model.find().exec();
+
+
+export const findCourseById = (courseId) =>
+  model.findById(courseId).exec();
+
+
 export function updateCourse(courseId, courseUpdates) {
-  const course = Database.courses.find(c => c._id === courseId);
-  if (!course) return null;
-  Object.assign(course, courseUpdates);
-  return course;
+  return model.updateOne(
+    { _id: courseId },
+    { $set: courseUpdates }
+  ).exec();
 }
+
+export function deleteCourse(courseId) {
+  return model.deleteOne({ _id: courseId });
+}
+
+
+export const findCoursesForEnrolledUser = async (userId) => {
+  const enrolls = await enrollmentDao.findEnrollmentsForUser(userId);
+  const courseIds = enrolls.map((e) => e.course);
+  return model.find({ _id: { $in: courseIds } }).exec();
+};

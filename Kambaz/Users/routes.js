@@ -5,20 +5,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 export default function UserRoutes(app) {
-  // — Create Course + auto-enroll
-  const createCourse = async (req, res) => {
-    try {
-      const user = req.session.currentUser;
-      if (!user) return res.sendStatus(401);
-      const newCourse = await courseDao.createCourse(req.body);
-      await enrollmentsDao.enrollUserInCourse(user._id, newCourse._id);
-      res.status(201).json(newCourse);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
+   const createCourse = async (req, res) => {
+    const cu = req.session.currentUser;
+    if (!cu) return res.sendStatus(401);
+
+    const newCourse = await courseDao.createCourse(req.body);
+
+    await enrollmentsDao.enrollUserInCourse(cu._id, newCourse._id);
+
+    res.json(newCourse);
   };
 
-  // — CRUD Users (ADMIN)
   const createUser   = async (req, res) => {
     try {
       const u = await dao.createUser(req.body);
@@ -64,7 +61,6 @@ const findAllUsers = async (req, res) => {
       }
       const updated = await dao.updateUser(req.params.userId, updates);
       if (!updated) return res.sendStatus(404);
-      // sync session if they updated themselves
       if (
         req.session.currentUser &&
         req.session.currentUser._id === updated._id.toString()
@@ -87,7 +83,6 @@ const findAllUsers = async (req, res) => {
     }
   };
 
-  // — Sign Up / Sign In / Profile / Sign Out
   const signup = async (req, res) => {
     try {
       const exists = await dao.findUserByUsername(req.body.username);
@@ -112,11 +107,11 @@ const findAllUsers = async (req, res) => {
     }
   };
 
-  const profile = (req, res) => {
-    const u = req.session.currentUser;
-    if (!u) return res.sendStatus(401);
-    res.json(u);
-  };
+ const profile = (req, res) => {
+  const cu = req.session.currentUser;
+  if (!cu) return res.json(null);
+  res.json(cu);
+};
 
   const signout = (req, res) => {
     req.session.destroy(err => {
@@ -129,14 +124,12 @@ const findAllUsers = async (req, res) => {
   const { userId }   = req.params;
   const userUpdates  = req.body;
   await dao.updateUser(userId, userUpdates);
-  // sync session if it’s the current user
   if (req.session.currentUser?._id === userId) {
     req.session.currentUser = { ...req.session.currentUser, ...userUpdates };
   }
   res.json(req.session.currentUser);
 });
 
-  // — List courses for a given user
   const findCoursesForEnrolledUser = async (req, res) => {
     try {
       let { userId } = req.params;
@@ -162,7 +155,6 @@ const findAllUsers = async (req, res) => {
   };
   app.get    ("/api/users/profile",         profile);
 
-  // ─── Mount all routes ───────────────────
   app.post   ("/api/users/current/courses", createCourse);
   app.get    ("/api/users/:userId/courses", findCoursesForEnrolledUser);
 
