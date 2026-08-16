@@ -19,7 +19,9 @@ const CONNECTION_STRING =
   'mongodb://127.0.0.1:27017/kambaz';
 
 const PORT = process.env.PORT || 4000;
-console.log('🔗 Connecting to MongoDB with URI:', CONNECTION_STRING);
+// Never log CONNECTION_STRING: it embeds the database password, which would
+// then sit in the host's plaintext log history.
+console.log('🔗 Connecting to MongoDB at:', CONNECTION_STRING.replace(/\/\/[^@]+@/, '//<credentials>@'));
 // First, connect to MongoDB Atlas
 mongoose
   .connect(CONNECTION_STRING)
@@ -32,8 +34,8 @@ mongoose
     const allowedOrigins = [
       'http://localhost:5173',
       process.env.NETLIFY_URL,
-      'https://phenomenal-kitten-2fb0cd.netlify.app',
-    ];
+      'https://courageous-kringle-096170.netlify.app',
+    ].filter(Boolean);
 
     app.use(
       cors({
